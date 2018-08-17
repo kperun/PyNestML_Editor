@@ -8,14 +8,25 @@ else:
     import tkinter as tk
 
 
-class MenuSetup(object):
-    def __init__(self, root, text_pad):
+class Menu(object):
+    def __init__(self, root, text_pad,editor):
         self.root = root
         self.textPad = text_pad
         self.menu = tk.Menu(self.root)
+        self.editor = editor
         self.root.config(menu=self.menu)
         self.__add_file_menu()
         self.__add_help_menu()
+        self.__add_check_button()
+        self.__add_compile_button()
+
+
+    def __add_compile_button(self):
+        self.menu.add_command(label='Compile Model',underline=True)
+
+    def __add_check_button(self):
+        self.menu.add_command(label='Check Model',command=self.editor.check_model)
+
 
     def __open_command(self):
         file_handler = tkFileDialog.askopenfile(parent=self.root, mode='rb', title='Select a file')
