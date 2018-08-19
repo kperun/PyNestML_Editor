@@ -25,7 +25,7 @@ class Menu(object):
         self.menu.add_command(label='Compile Model',underline=True)
 
     def __add_check_button(self):
-        self.menu.add_command(label='Check Model',command=self.editor.check_model)
+        self.menu.add_command(label='Check Model', command=self.editor.check_model)
 
 
     def __open_command(self):
@@ -34,10 +34,11 @@ class Menu(object):
             contents = file_handler.read()
             self.textPad.delete('1.0', tk.END)
             self.textPad.insert('1.0', contents)
+            self.editor.check_model_syntax(None)
             file_handler.close()
         # print(textPad.get("1.0","2.0")) returns the text as unicode
 
-    def __save_command(self):
+    def save_command(self):
         file_handler = tkFileDialog.asksaveasfile(mode='w')
         if file_handler is not None:
             # slice off the last character from get, as an extra return is added
@@ -71,7 +72,7 @@ class Menu(object):
         self.menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="New", command=self.__new_command)
         filemenu.add_command(label="Open...", command=self.__open_command)
-        filemenu.add_command(label="Save", command=self.__save_command)
+        filemenu.add_command(label="Save", command=self.save_command)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.exit_command)
 
@@ -79,3 +80,4 @@ class Menu(object):
         helpmenu = tk.Menu(self.menu)
         self.menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.__about_command)
+

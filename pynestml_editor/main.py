@@ -14,15 +14,15 @@ else:
 class EditorMain(object):
 
     def __init__(self):
-        self.root = tk.Tk(className=" Just another Text Editor")
+        self.root = tk.Tk(className="PyNestML IDE")
         self.textPad = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
                                     height=self.root.winfo_screenheight())
         self.menu = Menu(root=self.root, text_pad=self.textPad, editor=self)
         self.highlighter = Highlighter(self.textPad)
 
-        self.textPad.insert('1.0','PyNestML             \n')
-        self.textPad.insert('2.0','         Model       \n')
-        self.textPad.insert('3.0','               Editor\n')
+        self.textPad.insert('1.0', 'PyNestML             \n')
+        self.textPad.insert('2.0', '         Model       \n')
+        self.textPad.insert('3.0', '               Editor\n')
         self.textPad.tag_add("l1", "%s.%s" % (1, 0), "%s.%s" % (1, len('PyNestML')))
         self.textPad.tag_add("l2", "%s.%s" % (2, 0), "%s.%s" % (2, len('         Model')))
         self.textPad.tag_add("l3", "%s.%s" % (3, 0), "%s.%s" % (3, len('               Editor')))
@@ -31,6 +31,7 @@ class EditorMain(object):
         self.textPad.tag_config("l3", background="white", foreground="green")
 
         self.textPad.pack()
+        self.bind_keys()
         self.root.mainloop()
 
     def change_button_state(self, active = True):
@@ -44,6 +45,9 @@ class EditorMain(object):
     def exit_editor(self, _):
         self.menu.exit_command()
 
+    def store_command(self, _):
+        self.menu.save_command()
+
     def check_model(self):
         self.change_button_state(False)
         thread = threading.Thread(target=self.check_model_in_separate_thread)
@@ -51,17 +55,28 @@ class EditorMain(object):
         return thread  # returns immediately after the thread starts
 
     def check_model_in_separate_thread(self):
-        ModelChecker.check_model(self.textPad.get('0.0', tk.END))
+        ModelChecker.check_model_with_cocos(self.textPad.get('0.0', tk.END))
         self.report_findings()
 
+    def check_syntax_in_separate_thread(self):
+        ModelChecker.check_model_syntax(self.textPad.get('0.0', tk.END))
+        self.report_findings()
+
+    def check_model_syntax(self, _):
+        thread = threading.Thread(target=self.check_syntax_in_separate_thread)
+        thread.start()
+        return thread  # returns immediately after the thread starts
+
     def report_findings(self):
-        print('process complete!')
+        # print('process complete!')
         self.highlighter.process_report()
         self.change_button_state(True)
 
     def bind_keys(self):
         # bind the events
         self.textPad.bind('<Control-q>', self.exit_editor)
+        self.textPad.bind('<KeyRelease>', self.check_model_syntax)
+        self.textPad.bind('<Control-s>', self.store_command)
 
 
 if __name__ == '__main__':
