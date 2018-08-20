@@ -15,10 +15,16 @@ class EditorMain(object):
 
     def __init__(self):
         self.root = tk.Tk(className="PyNestML IDE")
+
         self.textPad = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
-                                    height=self.root.winfo_screenheight())
+                                    height=self.root.winfo_screenheight() / 25)
+
+
+        self.console = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
+                                    height=self.root.winfo_screenheight() / 60)
+
         self.menu = Menu(root=self.root, text_pad=self.textPad, editor=self)
-        self.highlighter = Highlighter(self.textPad)
+        self.highlighter = Highlighter(self.textPad,self)
 
         self.textPad.insert('1.0', 'PyNestML             \n')
         self.textPad.insert('2.0', '         Model       \n')
@@ -29,17 +35,19 @@ class EditorMain(object):
         self.textPad.tag_config("l1", background="white", foreground="blue")
         self.textPad.tag_config("l2", background="white", foreground="red")
         self.textPad.tag_config("l3", background="white", foreground="green")
-
-        self.textPad.pack()
+        self.last = None
+        self.textPad.pack(side=tk.TOP)
+        self.console.bind("<Key>", lambda e: "break")
+        self.console.pack(side=tk.BOTTOM)
         self.bind_keys()
         self.root.mainloop()
 
     def change_button_state(self, active = True):
         if not active:
-            self.menu.menu.entryconfig('Check Model', state=tk.DISABLED)
+            self.menu.menu.entryconfig('Check CoCos', state=tk.DISABLED)
             self.menu.menu.entryconfig('Compile Model', state=tk.DISABLED)
         else:
-            self.menu.menu.entryconfig('Check Model', state=tk.NORMAL)
+            self.menu.menu.entryconfig('Check CoCos', state=tk.NORMAL)
             self.menu.menu.entryconfig('Compile Model', state=tk.NORMAL)
 
     def exit_editor(self, _):
@@ -63,9 +71,11 @@ class EditorMain(object):
         self.report_findings()
 
     def check_model_syntax(self, _):
-        thread = threading.Thread(target=self.check_syntax_in_separate_thread)
-        thread.start()
-        return thread  # returns immediately after the thread starts
+        if self.textPad.get('0.0', tk.END) != self.last:
+            thread = threading.Thread(target=self.check_syntax_in_separate_thread)
+            thread.start()
+            self.last = self.textPad.get('0.0', tk.END)
+            return thread  # returns immediately after the thread starts
 
     def report_findings(self):
         # print('process complete!')
@@ -78,6 +88,8 @@ class EditorMain(object):
         self.textPad.bind('<KeyRelease>', self.check_model_syntax)
         self.textPad.bind('<Control-s>', self.store_command)
 
+    def report(self,text):
+        self.console.insert(tk.END,text + '\n')
 
 if __name__ == '__main__':
     editor = EditorMain()

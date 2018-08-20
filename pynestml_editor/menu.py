@@ -25,7 +25,7 @@ class Menu(object):
         self.menu.add_command(label='Compile Model',underline=True)
 
     def __add_check_button(self):
-        self.menu.add_command(label='Check Model', command=self.editor.check_model)
+        self.menu.add_command(label='Check CoCos', command=self.editor.check_model)
 
 
     def __open_command(self):
