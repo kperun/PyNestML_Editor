@@ -29,12 +29,15 @@ class Menu(object):
 
 
     def __open_command(self):
-        file_handler = tkFileDialog.askopenfile(parent=self.root, mode='rb', title='Select a file')
+        ftypes = [('NestML files', '*.nestml'), ('All files', '*')]
+        file_handler = tkFileDialog.askopenfile(parent=self.root, mode='rb', title='Open a file',filetypes = ftypes)
         if file_handler is not None:
             contents = file_handler.read()
             self.textPad.delete('1.0', tk.END)
             self.textPad.insert('1.0', contents)
             self.editor.check_model_syntax(None)
+            self.editor.highlighter.color_sl_comments()
+            self.editor.highlighter.color_ml_comments()
             file_handler.close()
         # print(textPad.get("1.0","2.0")) returns the text as unicode
 
@@ -80,4 +83,5 @@ class Menu(object):
         helpmenu = tk.Menu(self.menu)
         self.menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.__about_command)
+
 
