@@ -23,8 +23,8 @@ class Highlighter(object):
                 s_l = complete_text_as_lines.index(line) + 1
                 s_c = line.index('#')
                 e_l = s_l
-                e_c = len(line)
-                # print(line[s_c:e_c] + '%s %s : %s %s' %(s_l,s_c,e_l,e_c))
+                e_c = len(line) +1
+                #print(line[s_c:e_c] + '%s %s : %s %s' %(s_l,s_c,e_l,e_c))
                 self.color_comment(s_l, s_c, e_l, e_c)
 
     def color_comment(self, sl, sc, el, ec):
@@ -46,7 +46,7 @@ class Highlighter(object):
                 s_l = lines.index(line) + 1
                 s_c = line.index('/*')
                 e_l = s_l
-                e_c = len(line) + 2
+                e_c = len(line)
                 self.color_comment(s_l, s_c, e_l, e_c)
             elif '*/' in line:
                 active = False
@@ -59,7 +59,7 @@ class Highlighter(object):
                 s_l = lines.index(line) + 1
                 s_c = 0
                 e_l = s_l
-                e_c = len(line) + 2
+                e_c = len(line)
                 self.color_comment(s_l, s_c, e_l, e_c)
 
     def color_text_error(self, start_line, start_column, end_line, end_column):
@@ -102,6 +102,8 @@ class Highlighter(object):
     def __get_complete_word_len(self, error_position):
         complete_text_as_lines = self.text.get('1.0', tk.END + '-1c').splitlines()
         ret = ''
+        if error_position.start_line - 1 > len(complete_text_as_lines):
+            return 0
         for c in complete_text_as_lines[error_position.start_line - 1]:
             if complete_text_as_lines[error_position.start_line - 1].find(c) >= error_position.start_column:
                 if c != ' ':

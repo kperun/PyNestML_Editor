@@ -31,7 +31,7 @@ class ModelChecker(object):
     @classmethod
     def check_model_syntax(cls, model_as_string):
         if pynestml_available:
-            Logger.init_logger(LoggingLevel.INFO)
+            Logger.init_logger(LoggingLevel.NO)
             input_file = InputStream(model_as_string)
             lexer = PyNestMLLexer(input_file)
             set_up_lexer_error_reporting(lexer)

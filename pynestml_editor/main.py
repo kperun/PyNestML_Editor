@@ -19,12 +19,14 @@ class EditorMain(object):
         self.textPad = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
                                     height=self.root.winfo_screenheight() / 25)
 
+        self.line_nr = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
+                                    height=self.root.winfo_screenheight() / 70)
 
         self.console = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
-                                    height=self.root.winfo_screenheight() / 60)
+                                    height=self.root.winfo_screenheight() / 80)
 
         self.menu = Menu(root=self.root, text_pad=self.textPad, editor=self)
-        self.highlighter = Highlighter(self.textPad,self)
+        self.highlighter = Highlighter(self.textPad, self)
 
         self.textPad.insert('1.0', 'PyNestML             \n')
         self.textPad.insert('2.0', '         Model       \n')
@@ -39,16 +41,19 @@ class EditorMain(object):
         self.textPad.pack(side=tk.TOP)
         self.console.bind("<Key>", lambda e: "break")
         self.console.pack(side=tk.BOTTOM)
+        self.line_nr.bind("<Key>", lambda e: "break")
+        self.line_nr.pack(side=tk.BOTTOM)
+
         self.bind_keys()
         self.root.mainloop()
 
     def change_button_state(self, active = True):
         if not active:
-            self.menu.menu.entryconfig('Check CoCos', state=tk.DISABLED)
-            self.menu.menu.entryconfig('Compile Model', state=tk.DISABLED)
+            self.menu.modelmenu.entryconfig('Check CoCos', state=tk.DISABLED)
+            self.menu.modelmenu.entryconfig('Compile Model', state=tk.DISABLED)
         else:
-            self.menu.menu.entryconfig('Check CoCos', state=tk.NORMAL)
-            self.menu.menu.entryconfig('Compile Model', state=tk.NORMAL)
+            self.menu.modelmenu.entryconfig('Check CoCos', state=tk.NORMAL)
+            self.menu.modelmenu.entryconfig('Compile Model', state=tk.NORMAL)
 
     def exit_editor(self, _):
         self.menu.exit_command()
@@ -71,11 +76,19 @@ class EditorMain(object):
         self.report_findings()
 
     def check_model_syntax(self, _):
+        self.update_line_number()
+
         if self.textPad.get('0.0', tk.END) != self.last:
-            thread = threading.Thread(target=self.check_syntax_in_separate_thread)
-            thread.start()
-            self.last = self.textPad.get('0.0', tk.END)
-            return thread  # returns immediately after the thread starts
+            if self.last is None or "".join(self.textPad.get('0.0', tk.END).split()) != "".join(self.last.split()):
+                thread = threading.Thread(target=self.check_syntax_in_separate_thread)
+                thread.start()
+                self.last = self.textPad.get('0.0', tk.END)
+                return thread  # returns immediately after the thread starts
+
+    def update_line_number(self):
+        self.line_nr.delete('1.0', tk.END)
+        pos = self.textPad.index(tk.INSERT).split('.')
+        self.line_nr.insert('1.0', 'Position: %s:%s' % (pos[0], pos[1]))
 
     def report_findings(self):
         # print('process complete!')
@@ -88,8 +101,9 @@ class EditorMain(object):
         self.textPad.bind('<KeyRelease>', self.check_model_syntax)
         self.textPad.bind('<Control-s>', self.store_command)
 
-    def report(self,text):
-        self.console.insert(tk.END,text + '\n')
+    def report(self, text):
+        self.console.insert(tk.END, text + '\n')
+
 
 if __name__ == '__main__':
     editor = EditorMain()

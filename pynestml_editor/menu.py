@@ -16,17 +16,8 @@ class Menu(object):
         self.editor = editor
         self.root.config(menu=self.menu)
         self.__add_file_menu()
+        self.__add_model_menu()
         self.__add_help_menu()
-        self.__add_check_button()
-        self.__add_compile_button()
-
-
-    def __add_compile_button(self):
-        self.menu.add_command(label='Compile Model',underline=True)
-
-    def __add_check_button(self):
-        self.menu.add_command(label='Check CoCos', command=self.editor.check_model)
-
 
     def __open_command(self):
         ftypes = [('NestML files', '*.nestml'), ('All files', '*')]
@@ -70,6 +61,14 @@ class Menu(object):
                 self.textPad.delete('1.0', tk.END)
                 self.textPad.insert('1.0', f.read())
 
+    def __add_model_menu(self):
+        self.modelmenu = tk.Menu(self.menu)
+        self.menu.add_cascade(label="Model", menu=self.modelmenu)
+        self.modelmenu.add_command(label='Compile Model', underline=True)
+        self.modelmenu.add_command(label='Check CoCos', command=self.editor.check_model)
+        self.modelmenu.add_command(label='Set active CoCos')# todo
+
+
     def __add_file_menu(self):
         filemenu = tk.Menu(self.menu)
         self.menu.add_cascade(label="File", menu=filemenu)
@@ -83,5 +82,3 @@ class Menu(object):
         helpmenu = tk.Menu(self.menu)
         self.menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.__about_command)
-
-
