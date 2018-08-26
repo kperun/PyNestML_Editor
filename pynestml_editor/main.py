@@ -15,9 +15,10 @@ class EditorMain(object):
 
     def __init__(self):
         self.root = tk.Tk(className="PyNestML IDE")
+        self.after_id = None
 
         self.textPad = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
-                                    height=self.root.winfo_screenheight() / 25)
+                                    height=self.root.winfo_screenheight() / 25, undo=True)
 
         self.line_nr = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
                                     height=self.root.winfo_screenheight() / 70)
@@ -39,9 +40,12 @@ class EditorMain(object):
         self.textPad.tag_config("l3", background="white", foreground="green")
         self.last = None
         self.textPad.pack(side=tk.TOP)
-        self.console.bind("<Key>", lambda e: "break")
+        #self.console.bind("<Key>", lambda e: "break")
         self.console.pack(side=tk.BOTTOM)
-        self.line_nr.bind("<Key>", lambda e: "break")
+        self.console.configure(state='disabled')
+        self.line_nr.insert('1.0','Position: 0:0')
+        #self.line_nr.bind("<Key>", lambda e: "break")
+        self.line_nr.configure(state='disabled')
         self.line_nr.pack(side=tk.BOTTOM)
 
         self.bind_keys()
@@ -77,7 +81,14 @@ class EditorMain(object):
 
     def check_model_syntax(self, _):
         self.update_line_number()
+        # cancel the old job
+        if self.after_id is not None:
+            self.textPad.after_cancel(self.after_id)
 
+        # create a new job
+        self.after_id = self.textPad.after(800, self.do_check_model_syntax)
+
+    def do_check_model_syntax(self):
         if self.textPad.get('0.0', tk.END) != self.last:
             if self.last is None or "".join(self.textPad.get('0.0', tk.END).split()) != "".join(self.last.split()):
                 thread = threading.Thread(target=self.check_syntax_in_separate_thread)
@@ -86,9 +97,11 @@ class EditorMain(object):
                 return thread  # returns immediately after the thread starts
 
     def update_line_number(self):
+        self.line_nr.configure(state='normal')
         self.line_nr.delete('1.0', tk.END)
         pos = self.textPad.index(tk.INSERT).split('.')
         self.line_nr.insert('1.0', 'Position: %s:%s' % (pos[0], pos[1]))
+        self.line_nr.configure(state='disabled')
 
     def report_findings(self):
         # print('process complete!')
@@ -102,7 +115,17 @@ class EditorMain(object):
         self.textPad.bind('<Control-s>', self.store_command)
 
     def report(self, text):
-        self.console.insert(tk.END, text + '\n')
+        if self.menu.show_syntax_errors_var.get() == 1:
+            self.console.configure(state='normal')
+            self.console.insert(tk.END, text + '\n')
+            self.console.configure(state='disabled')
+
+    def inc_font_size(self):
+        self.textPad.configure(font=("Courier", 44))
+
+    def dec_font_size(self):
+        print(self.textPad.config()['font'][3])
+        self.textPad.configure(font=("Courier", self.textPad['font']['size']))
 
 
 if __name__ == '__main__':
