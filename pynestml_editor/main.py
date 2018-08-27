@@ -1,6 +1,7 @@
 import sys
 from ScrolledText import *
 import threading
+import tkFont
 from pynestml_editor.highlighter import Highlighter
 from pynestml_editor.menu import Menu
 from pynestml_editor.model_checker import ModelChecker
@@ -9,6 +10,8 @@ if sys.version_info < (3, 0):
     import Tkinter as tk
 else:
     import tkinter as tk
+
+
 
 
 class EditorMain(object):
@@ -117,15 +120,18 @@ class EditorMain(object):
     def report(self, text):
         if self.menu.show_syntax_errors_var.get() == 1:
             self.console.configure(state='normal')
+            self.console.delete('1.0',tk.END)
             self.console.insert(tk.END, text + '\n')
             self.console.configure(state='disabled')
 
     def inc_font_size(self):
-        self.textPad.configure(font=("Courier", 44))
+        f = tkFont.Font(self.textPad,self.textPad.cget('font'))
+        self.textPad.configure(font=("Courier", f.configure()['size'] + 1))
 
     def dec_font_size(self):
-        print(self.textPad.config()['font'][3])
-        self.textPad.configure(font=("Courier", self.textPad['font']['size']))
+        f = tkFont.Font(self.textPad, self.textPad.cget('font'))
+        if not f.configure()['size'] - 1 < 4:
+            self.textPad.configure(font=("Courier", f.configure()['size'] - 1))
 
 
 if __name__ == '__main__':

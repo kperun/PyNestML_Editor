@@ -14,7 +14,6 @@ class Highlighter(object):
     def __init__(self, text, editor):
         self.text = text
         self.editor = editor
-        self.counter = 1
 
     def color_sl_comments(self):
         complete_text_as_lines = self.text.get('1.0', tk.END + '-1c').splitlines()
@@ -23,25 +22,31 @@ class Highlighter(object):
                 s_l = complete_text_as_lines.index(line) + 1
                 s_c = line.index('#')
                 e_l = s_l
-                e_c = len(line) +1
-                #print(line[s_c:e_c] + '%s %s : %s %s' %(s_l,s_c,e_l,e_c))
+                e_c = len(line)
+                print(line + str(e_c))
+                # print(line[s_c:e_c] + '%s %s : %s %s' %(s_l,s_c,e_l,e_c))
                 self.color_comment(s_l, s_c, e_l, e_c)
 
     def color_comment(self, sl, sc, el, ec):
-        self.text.tag_add("comment", "%s.%s" % (sl, sc), "%s.%s" % (el, ec))
-        self.text.tag_config("comment", background="white", foreground="grey")
+        name = "comment%s.%s.%s.%s." % (sl, sc, el, ec)
+        self.text.tag_add(name, "%s.%s" % (sl, sc), "%s.%s" % (el, ec))
+        self.text.tag_config(name, background="white", foreground="red")
+        #print(self.text.tag_cget(name,'foreground'))
 
     def color_ml_comments(self):
         lines = self.text.get('1.0', tk.END + '-1c').splitlines()
         active = False
         for line in lines:
+            print('>>>' + line)
             if '/*' in line and '*/' in line:
+                print('<')
                 s_l = lines.index(line) + 1
                 s_c = line.index('/*')
                 e_l = s_l
                 e_c = line.index('*/') + 2
                 self.color_comment(s_l, s_c, e_l, e_c)
             elif '/*' in line:
+                print('<<')
                 active = True
                 s_l = lines.index(line) + 1
                 s_c = line.index('/*')
@@ -49,6 +54,7 @@ class Highlighter(object):
                 e_c = len(line)
                 self.color_comment(s_l, s_c, e_l, e_c)
             elif '*/' in line:
+                print('<<<')
                 active = False
                 s_l = lines.index(line) + 1
                 s_c = 0
@@ -56,6 +62,7 @@ class Highlighter(object):
                 e_c = line.index('*/') + 2
                 self.color_comment(s_l, s_c, e_l, e_c)
             elif active:
+                print('<<<<')
                 s_l = lines.index(line) + 1
                 s_c = 0
                 e_l = s_l
@@ -78,10 +85,11 @@ class Highlighter(object):
         for tag in self.text.tag_names():
             self.text.tag_delete(tag)
         self.color_sl_comments()
-        self.color_ml_comments()
+        # self.color_ml_comments()
+        counter = 1
         for (artifact_name, neuron, log_level, code, error_position, message) in Logger.log.values():
-            self.editor.report('[%s]%s@%s: %s' % (self.counter, log_level.name, error_position, message))
-            self.counter += 1
+            self.editor.report('[%s]%s@%s: %s' % (counter, log_level.name, error_position, message))
+            counter += 1
             if self.__check_if_point(error_position):
                 offset = self.__get_complete_word_len(error_position)
             else:
