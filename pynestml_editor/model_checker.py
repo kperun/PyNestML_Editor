@@ -51,7 +51,7 @@ class ModelChecker(object):
     @classmethod
     def check_model_with_cocos(cls, model_as_string):
         if pynestml_available:
-            Logger.init_logger(LoggingLevel.INFO)
+            Logger.init_logger(LoggingLevel.NO)
 
             model = ModelParser.parse_model(model=model_as_string, from_string=True)
             return str(Logger.get_json_format())

@@ -28,7 +28,7 @@ class Highlighter(object):
     def color_comment(self, sl, sc, el, ec):
         name = "comment%s.%s.%s.%s." % (sl, sc, el, ec)
         self.text.tag_add(name, "%s.%s" % (sl, sc), "%s.%s" % (el, ec))
-        self.text.tag_config(name, background="white", foreground="grey",selectbackground="#ededed")
+        self.text.tag_config(name, background="white", foreground="grey", selectbackground="#ededed")
 
     def color_ml_comments(self):
         lines = self.text.get('1.0', tk.END + '-1c').splitlines()
@@ -78,10 +78,16 @@ class Highlighter(object):
             self.text.tag_delete(tag)
         self.color_sl_comments()
         self.color_ml_comments()
+        self.editor.clear_console()
         counter = 1
         for (artifact_name, neuron, log_level, code, error_position, message) in Logger.log.values():
-            self.editor.report('[%s]%s@%s: %s' % (counter, log_level.name, error_position, message))
+            self.editor.report('[%s]%s@%s: %s' % (counter, log_level.name,
+                                                  error_position if error_position is not None else 'GLOBAL',
+                                                  message))
             counter += 1
+            if error_position is None:  # this is only a general information, thus no reporting
+                continue
+
             if self.__check_if_point(error_position):
                 offset = self.__get_complete_word_len(error_position)
             else:
@@ -104,10 +110,9 @@ class Highlighter(object):
         ret = ''
         if error_position.start_line - 1 > len(complete_text_as_lines):
             return 0
-        for c in complete_text_as_lines[error_position.start_line - 1]:
-            if complete_text_as_lines[error_position.start_line - 1].find(c) >= error_position.start_column:
-                if c != ' ':
-                    ret += c
-                else:
-                    break
+        for c in complete_text_as_lines[error_position.start_line - 1][error_position.start_column:]:
+            if c != ' ':
+                ret += c
+            else:
+                break
         return len(ret)

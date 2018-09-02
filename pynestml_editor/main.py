@@ -12,8 +12,6 @@ else:
     import tkinter as tk
 
 
-
-
 class EditorMain(object):
 
     def __init__(self):
@@ -43,14 +41,13 @@ class EditorMain(object):
         self.textPad.tag_config("l3", background="white", foreground="green")
         self.last = None
         self.textPad.pack(side=tk.TOP)
-        #self.console.bind("<Key>", lambda e: "break")
+        # self.console.bind("<Key>", lambda e: "break")
         self.console.pack(side=tk.BOTTOM)
         self.console.configure(state='disabled')
-        self.line_nr.insert('1.0','Position: 0:0')
-        #self.line_nr.bind("<Key>", lambda e: "break")
+        self.line_nr.insert('1.0', 'Position: 0:0')
+        # self.line_nr.bind("<Key>", lambda e: "break")
         self.line_nr.configure(state='disabled')
         self.line_nr.pack(side=tk.BOTTOM)
-
         self.bind_keys()
         self.root.mainloop()
 
@@ -75,8 +72,10 @@ class EditorMain(object):
         return thread  # returns immediately after the thread starts
 
     def check_model_in_separate_thread(self):
+        self.textPad.configure(state='disabled')
         ModelChecker.check_model_with_cocos(self.textPad.get('0.0', tk.END))
         self.report_findings()
+        self.textPad.configure(state='normal')
 
     def check_syntax_in_separate_thread(self):
         ModelChecker.check_model_syntax(self.textPad.get('0.0', tk.END))
@@ -117,15 +116,17 @@ class EditorMain(object):
         self.textPad.bind('<KeyRelease>', self.check_model_syntax)
         self.textPad.bind('<Control-s>', self.store_command)
 
+    def clear_console(self):
+        self.console.delete('1.0', tk.END)
+
     def report(self, text):
         if self.menu.show_syntax_errors_var.get() == 1:
             self.console.configure(state='normal')
-            self.console.delete('1.0',tk.END)
             self.console.insert(tk.END, text + '\n')
             self.console.configure(state='disabled')
 
     def inc_font_size(self):
-        f = tkFont.Font(self.textPad,self.textPad.cget('font'))
+        f = tkFont.Font(self.textPad, self.textPad.cget('font'))
         self.textPad.configure(font=("Courier", f.configure()['size'] + 1))
 
     def dec_font_size(self):
