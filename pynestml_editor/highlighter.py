@@ -1,6 +1,9 @@
 import sys
 
 from pynestml.utils.logger import Logger, LoggingLevel
+from pynestml.symbols.predefined_types import PredefinedTypes
+from pynestml.symbols.predefined_functions import PredefinedFunctions
+import re
 
 if sys.version_info < (3, 0):
     import Tkinter as tk
@@ -14,52 +17,17 @@ class Highlighter(object):
     def __init__(self, text, editor):
         self.text = text
         self.editor = editor
-
-    def color_sl_comments(self):
-        complete_text_as_lines = self.text.get('1.0', tk.END + '-1c').splitlines()
-        for number, line in enumerate(complete_text_as_lines):
-            if '#' in line:
-                s_l = number + 1
-                s_c = line.index('#')
-                e_l = s_l
-                e_c = len(line)
-                self.color_comment(s_l, s_c, e_l, e_c)
+        self.pat = re.compile("[0-9.]+|[a-zA-Z_]+")
 
     def color_comment(self, sl, sc, el, ec):
         name = "comment%s.%s.%s.%s." % (sl, sc, el, ec)
         self.text.tag_add(name, "%s.%s" % (sl, sc), "%s.%s" % (el, ec))
         self.text.tag_config(name, background="white", foreground="grey", selectbackground="#ededed")
 
-    def color_ml_comments(self):
-        lines = self.text.get('1.0', tk.END + '-1c').splitlines()
-        active = False
-        for number, line in enumerate(lines):
-            if '/*' in line and '*/' in line:
-                s_l = number + 1
-                s_c = line.index('/*')
-                e_l = s_l
-                e_c = line.index('*/') + 2
-                self.color_comment(s_l, s_c, e_l, e_c)
-            elif '/*' in line:
-                active = True
-                s_l = number + 1
-                s_c = line.index('/*')
-                e_l = s_l
-                e_c = len(line)
-                self.color_comment(s_l, s_c, e_l, e_c)
-            elif '*/' in line:
-                active = False
-                s_l = number + 1
-                s_c = 0
-                e_l = s_l
-                e_c = line.index('*/') + 2
-                self.color_comment(s_l, s_c, e_l, e_c)
-            elif active:
-                s_l = number + 1
-                s_c = 0
-                e_l = s_l
-                e_c = len(line)
-                self.color_comment(s_l, s_c, e_l, e_c)
+    def color_type(self, sl, sc, el, ec):
+        name = "comment%s.%s.%s.%s." % (sl, sc, el, ec)
+        self.text.tag_add(name, "%s.%s" % (sl, sc), "%s.%s" % (el, ec))
+        self.text.tag_config(name, background="white", foreground="green", selectbackground="#ededed")
 
     def color_text_error(self, start_line, start_column, end_line, end_column):
         self.text.tag_add("error", "%s.%s" % (start_line, start_column), "%s.%s" % (end_line, end_column))
@@ -76,8 +44,7 @@ class Highlighter(object):
     def process_report(self):
         for tag in self.text.tag_names():
             self.text.tag_delete(tag)
-        self.color_sl_comments()
-        self.color_ml_comments()
+        self.color_components()
         self.editor.clear_console()
         counter = 1
         for (artifact_name, neuron, log_level, code, error_position, message) in Logger.log.values():
@@ -116,3 +83,53 @@ class Highlighter(object):
             else:
                 break
         return len(ret)
+
+    def color_components(self):
+        complete_text_as_lines = self.text.get('1.0', tk.END + '-1c').splitlines()
+        active = False
+        for number, line in enumerate(complete_text_as_lines):
+            last_start_index = -1
+            if '#' in line:
+                s_l = number + 1
+                s_c = line.index('#')
+                e_l = s_l
+                e_c = len(line)
+                self.color_comment(s_l, s_c, e_l, e_c)
+            if '/*' in line and '*/' in line:
+                s_l = number + 1
+                s_c = line.index('/*')
+                e_l = s_l
+                e_c = line.index('*/') + 2
+                self.color_comment(s_l, s_c, e_l, e_c)
+            elif '/*' in line:
+                active = True
+                s_l = number + 1
+                s_c = line.index('/*')
+                e_l = s_l
+                e_c = len(line)
+                self.color_comment(s_l, s_c, e_l, e_c)
+            elif '*/' in line:
+                active = False
+                s_l = number + 1
+                s_c = 0
+                e_l = s_l
+                e_c = line.index('*/') + 2
+                self.color_comment(s_l, s_c, e_l, e_c)
+            elif active:
+                s_l = number + 1
+                s_c = 0
+                e_l = s_l
+                e_c = len(line)
+                self.color_comment(s_l, s_c, e_l, e_c)
+            for index, word in enumerate(self.pat.findall(line)):
+                s_l = number + 1
+                s_c = line.find(word)#todo
+                e_l = s_l
+                e_c = s_c + len(word)
+                if self.editor.textPad.tag_names('%s.%s' % (s_l, s_c)):
+                    continue
+
+                if word in PredefinedTypes.get_types():
+                    last_start_index = s_c
+                    print(word + '@' + str(s_l) + '_' + str(s_c) + ' in ' + str(self.pat.findall(line)))
+                    self.color_type(s_l, s_c, e_l, e_c)

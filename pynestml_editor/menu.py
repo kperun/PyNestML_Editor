@@ -28,8 +28,7 @@ class Menu(object):
             self.textPad.delete('1.0', tk.END)
             self.textPad.insert('1.0', contents)
             self.editor.check_model_syntax(None)
-            self.editor.highlighter.color_sl_comments()
-            self.editor.highlighter.color_ml_comments()
+            self.editor.highlighter.color_components()
             file_handler.close()
         # print(textPad.get("1.0","2.0")) returns the text as unicode
 

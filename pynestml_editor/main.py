@@ -1,7 +1,8 @@
 import sys
-from ScrolledText import *
 import threading
 import tkFont
+from ScrolledText import *
+
 from pynestml_editor.highlighter import Highlighter
 from pynestml_editor.menu import Menu
 from pynestml_editor.model_checker import ModelChecker
@@ -18,18 +19,30 @@ class EditorMain(object):
         self.root = tk.Tk(className="PyNestML IDE")
         self.after_id = None
 
-        self.textPad = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
-                                    height=self.root.winfo_screenheight() / 25, undo=True)
+        self.text_frame = tk.Frame(self.root, width=self.root.winfo_screenwidth(),
+                                   height=self.root.winfo_screenheight() * 0.70)
+        self.text_frame.pack_propagate(False)
+        self.textPad = ScrolledText(self.text_frame, height=1, width=1, undo=True)
+        self.textPad.pack(side="top", fill="both", expand=True)
+        self.text_frame.pack(side="top", fill="both", expand=True)
 
-        self.line_nr = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
-                                    height=self.root.winfo_screenheight() / 70)
+        self.line_nr_frame = tk.Frame(self.root, width=self.root.winfo_screenwidth())
+        self.line_nr_frame.pack_propagate(False)
+        self.line_nr = tk.Text(self.root, width=self.root.winfo_screenwidth(), height=1)
+        self.line_nr.pack(side="top", fill="both", expand=True)
+        self.line_nr_frame.pack(side="top", fill="both", expand=True)
 
-        self.console = ScrolledText(self.root, width=self.root.winfo_screenwidth(),
-                                    height=self.root.winfo_screenheight() / 80)
+        self.console_frame = tk.Frame(self.root, width=self.root.winfo_screenwidth(),
+                                      height=self.root.winfo_screenheight() * 0.20)
+        self.console_frame.pack_propagate(False)
+        self.console = ScrolledText(self.console_frame, width=1, height=1)
+        self.console.pack(side="top", fill="both", expand=True)
+        self.console_frame.pack(side="top", fill="both", expand=True)
 
         self.menu = Menu(root=self.root, text_pad=self.textPad, editor=self)
         self.highlighter = Highlighter(self.textPad, self)
 
+        # insert empty model
         self.textPad.insert('1.0', 'PyNestML             \n')
         self.textPad.insert('2.0', '         Model       \n')
         self.textPad.insert('3.0', '               Editor\n')
@@ -39,15 +52,13 @@ class EditorMain(object):
         self.textPad.tag_config("l1", background="white", foreground="blue")
         self.textPad.tag_config("l2", background="white", foreground="red")
         self.textPad.tag_config("l3", background="white", foreground="green")
-        self.last = None
-        self.textPad.pack(side=tk.TOP)
-        # self.console.bind("<Key>", lambda e: "break")
+        self.last = self.textPad.get('0.0', tk.END)
+        # insert start position of cursor
         self.console.pack(side=tk.BOTTOM)
         self.console.configure(state='disabled')
         self.line_nr.insert('1.0', 'Position: 0:0')
-        # self.line_nr.bind("<Key>", lambda e: "break")
         self.line_nr.configure(state='disabled')
-        self.line_nr.pack(side=tk.BOTTOM)
+        # bind keys
         self.bind_keys()
         self.root.mainloop()
 
