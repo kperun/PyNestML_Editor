@@ -5,11 +5,15 @@ from pynestml.symbols.predefined_types import PredefinedTypes
 from pynestml.symbols.predefined_functions import PredefinedFunctions
 import re
 
+import tkFont
+
 if sys.version_info < (3, 0):
     import Tkinter as tk
 else:
     import tkinter as tk
 
+keywords = ['neuron','initial_values','equations','function','shape','parameters','internals','input','output','update'
+            'for','if','elif','else','while','spike','current','end']
 
 class Highlighter(object):
     # create a menu & define functions for each menu item
@@ -40,6 +44,18 @@ class Highlighter(object):
     def color_default(self, start_line, start_column, end_line, end_column):
         self.text.tag_add("default", "%s.%s" % (start_line, start_column), "%s.%s" % (end_line, end_column))
         self.text.tag_config("default", background="white", foreground="black")
+
+    def make_bold(self, start_line, start_column, end_line, end_column):
+        f = tkFont.Font(self.editor.textPad, self.editor.textPad.cget('font'))
+        name = "bold%s.%s.%s.%s." % (start_line, start_column, end_line, end_column)
+        self.text.tag_add(name, "%s.%s" % (start_line, start_column), "%s.%s" % (end_line, end_column))
+        self.editor.textPad.tag_configure(name, font=("Courier", f.configure()['size']+2,'bold'))
+
+    def make_italic(self, start_line, start_column, end_line, end_column):
+        f = tkFont.Font(self.editor.textPad, self.editor.textPad.cget('font'))
+        name = "italic%s.%s.%s.%s." % (start_line, start_column, end_line, end_column)
+        self.text.tag_add(name, "%s.%s" % (start_line, start_column), "%s.%s" % (end_line, end_column))
+        self.editor.textPad.tag_configure(name, font=("Courier", f.configure()['size']+2,'italic'))
 
     def process_report(self):
         for tag in self.text.tag_names():
@@ -121,15 +137,21 @@ class Highlighter(object):
                 e_l = s_l
                 e_c = len(line)
                 self.color_comment(s_l, s_c, e_l, e_c)
-            for index, word in enumerate(self.pat.findall(line)):
+            cur_line = line
+            indices = [(index, word) for (index, word) in enumerate(self.pat.findall(line))]
+            for _, word in indices:
                 s_l = number + 1
-                s_c = line.find(word)#todo
+                s_c = cur_line.find(word)
                 e_l = s_l
                 e_c = s_c + len(word)
+                cur_line = cur_line.replace(word, 'X' * len(word), 1)
+                # skip it if it is already tagged
                 if self.editor.textPad.tag_names('%s.%s' % (s_l, s_c)):
                     continue
 
                 if word in PredefinedTypes.get_types():
-                    last_start_index = s_c
-                    print(word + '@' + str(s_l) + '_' + str(s_c) + ' in ' + str(self.pat.findall(line)))
                     self.color_type(s_l, s_c, e_l, e_c)
+                if word in PredefinedFunctions.get_function_symbols():
+                    self.make_italic(s_l, s_c, e_l, e_c)
+                if word in keywords:
+                    self.make_bold(s_l, s_c, e_l, e_c)
